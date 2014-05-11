@@ -4,10 +4,10 @@
 	<head>
 		<meta charset="utf-8">
 
-		<title>reveal.js - The HTML Presentation Framework</title>
+		<title>Монады в scala</title>
 
-		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
-		<meta name="author" content="Hakim El Hattab">
+		<meta name="description" content="">
+		<meta name="author" content="Игорь Вовк">
 
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -44,17 +44,31 @@
 			<div class="slides">
 				<section>
 					<h1>Монады в scala</h1>
+                    <a href="http://igorynia.github.io/scala-monads-presentation/">igorynia.github.io/scala-monads-presentation</a>
 				</section>
 
                 <section>
-                    <h2>Вход в уголок маньяка</h2>
+                    <h2>Короткий экскурс в синтаксис Scala</h2>
                 </section>
 
                 <section>
-                    <h3>Базовый синтаксис:</h3>
+                    <ul>
+                        <li>Синтаксис очень похож на синтаксис Java
+                        <li>Легко читается людьми, которые видели Java (в отличии от других функциональных языков)
+                        <li>Кода удается писать <a href="http://stackoverflow.com/questions/2952732/samples-of-scala-and-java-code-where-scala-code-looks-simpler-has-fewer-lines">меньше</a>
+                        <li>Часто можно не указывать типы, компилятор сам умеет их выводить
+                        <li>В java переменную можно пометить как <code>final</code>, в scala она помечается как <code>val</code>, что говорит о том,
+                            что значение в такую переменную можно присвоить только один раз
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Базовый синтаксис</h3>
                     <pre><code data-trim class="language-scala">
+// Трейты
+trait Number {}
 // Классы
-class RichInt(num: Int) {
+class RichInt(num: Int) extends Number {
     // Методы внутри классов
     def plus(other: Int): RichInt = new RichInt(num + other)
 }
@@ -68,7 +82,7 @@ a.plus(5)
                 </section>
 
                 <section>
-                    <h3>Типы:</h3>
+                    <h3>Типы</h3>
 
                     <pre><code data-trim>
 // Тип может быть алиасом другого типа
@@ -77,17 +91,19 @@ type SuperString = String
 type IntList = List[Int]
 // Описание типа функции – параметр(-ы) => тип возвращаемого значения
 type IntToString = Int => String
+// Функции высшего порядка
+val to: IntToString = (number: Int) => number.toString
 
-def to(int: Int): String = ???
-> to: IntToString
+to(5)
+> "5"
                     </code></pre>
                 </section>
 
                 <section>
-                    <p>Типы могут быть описаны в теле класса, но быть заданы лишь на этапе инстанциации:</p>
+                    <p>Типы могут быть описаны в теле класса, но быть заданы лишь на этапе инстанциации</p>
                     <pre><code data-trim>
-// При описании класса мы не задаем конкретных типов, лишь говорим,
-// что будем оперировать двумя типами А и B
+// В данном случае при описании класса мы не задаем конкретных типов,
+// лишь говорим, что будем оперировать двумя типами A и B
 class Converter[A, B] {
 
   def convert(a: A): B = ??? // Первый метод будет иметь тип A => B
@@ -106,15 +122,11 @@ assert(intToStringConverter.convertBack("123") == 123)
                 </section>
 
                 <section>
-                    <h2>Выход из уголка маньяка</h2>
-                </section>
-
-                <section>
                     <h3>Что такое "монада"</h3>
 
                     <ul>
                         <li>всего лишь архитектурный паттерн
-                        <li>являются оберткой вокруг данных
+                        <li>является оберткой вокруг данных
                         <li>"абстракция линейной цепочки связанных вычислений" &copy; википедия
                     </ul>
                 </section>
@@ -124,13 +136,9 @@ assert(intToStringConverter.convertBack("123") == 123)
 
                     <pre><code data-trim>
 trait Monad[A] {
-
     def apply(a: A): Monad[A]
-
     def map[B](f: A => B): Monad[B]
-
     def flatMap[B](f: A => Monad[B]): Monad[B]
-
 }
                     </code></pre>
 
@@ -138,12 +146,12 @@ trait Monad[A] {
 
                     <p class="fragment">
                         Предлагает стандартизвированный интерфейс для
-                        композиции последовательных операций над внутренним(-и) значением
+                        композиции последовательных операций над внутренним(-и) значениями
                     </p>
                     <ul>
-                        <li class="fragment"><b>apply</b> – создает монаду, как контейнер для значения
-                        <li class="fragment"><b>map</b> – применяет "обычную" ф-ю к внутреннему значению
-                        <li class="fragment"><b>flatMap</b> – применяет "монадическую" ф-ю к внутреннему значению
+                        <li class="fragment"><b>apply</b> – создает монаду из значения
+                        <li class="fragment"><b>map</b> – применяет "обычную" функцию <code>f: A => B</code> к внутреннему значению
+                        <li class="fragment"><b>flatMap</b> – применяет "монадическую" функцию <code>f: A => Monad[B]</code> к внутреннему значению
                     </ul>
                 </section>
 
@@ -212,7 +220,7 @@ public Integer compute(Foo foo) {
                 </section>
 
                 <section>
-                    <h2>Код на scala, java-way</h2>
+                    <h3>Код на scala, java-way</h3>
 
                     <pre class="stretch"><code data-trim>
 class Foo {
@@ -244,7 +252,7 @@ def compute(foo: Foo): Int =
                 </section>
 
                 <section>
-                    <h3>Монада "Option"</h3>
+                    <h3>Монада "Option" <small>(<a href="https://github.com/scala/scala/blob/2.11.x/src/library/scala/Option.scala">src</a>)</small></h3>
 
                     <pre><code data-trim>
 sealed trait Option[A]
@@ -255,7 +263,7 @@ case class None[A] extends Option[A]
                 </section>
 
                 <section>
-                    <h3>Монада "Option"</h3>
+                    <h3>Монада "Option" <small>(<a href="https://github.com/scala/scala/blob/2.11.x/src/library/scala/Option.scala">src</a>)</small></h3>
 
                     <pre><code data-trim>
 sealed trait Option[A] {
@@ -269,7 +277,7 @@ case class None[A] extends Option[A]
                 </section>
 
                 <section>
-                    <h3>Монада "Option"</h3>
+                    <h3>Монада "Option" <small>(<a href="https://github.com/scala/scala/blob/2.11.x/src/library/scala/Option.scala">src</a>)</small></h3>
 
                     <pre><code data-trim>
 sealed trait Option[A] {
@@ -287,7 +295,7 @@ case class None[A] extends Option[A]
                 </section>
 
                 <section>
-                    <h3>Монада "Option"</h3>
+                    <h3>Монада "Option" <small>(<a href="https://github.com/scala/scala/blob/2.11.x/src/library/scala/Option.scala">src</a>)</small></h3>
 
                     <pre><code data-trim>
 sealed trait Option[A] {
@@ -557,7 +565,7 @@ expr = ... | expr '?' expr | ...
                             <ul>
                                 <li><code>12 &rarrtl; {12}</code>
                                 <li><code>10 ? 3 &rarrtl; {10, 3}</code>
-                                <li><code>2 * (10 ? 3) = {2 * 10, 2 * 3) &rarrtl; {20, 6}</code>
+                                <li><code>2 * (10 ? 3) = {2 * 10, 2 * 3} &rarrtl; {20, 6}</code>
                                 <li><code>1 / 0 &rarrtl; {}</code>
                                 <li><code>(1 / 0) ? 1 &rarrtl; {}</code>
                                 <li><code>1 ? (0 / 1) &rarrtl; {1}</code>
@@ -606,73 +614,180 @@ def evalOp(o: String, l: Int, r: Int): Set[Int] = o match {
                 </section>
 
                 <section>
-                    <h2>Пример из веба</h2>
+                    <h3>Еще монады</h3>
+
+                    <img src="http://i.imgur.com/S4FxG6V.jpg">
+                </section>
+
+                <section>
+                    <h3>Монада <code>Try</code> <small>(<a href="https://github.com/scala/scala/blob/2.11.x/src/library/scala/util/Try.scala">src</a>)</small></h3>
 
                     <pre class="stretch"><code data-trim>
-type Backend = Request => Response
-def backend(req: Request): Response = ???
+trait Try[A] {
+    def map[B](f: A => B): Try[B]
+    def flatMap[B](f: A => Try[B]): Try[B]
+}
 
-// И более детально:
-type Backend = Request => AuthorizedRequest => RawDbData => DbModels => View => Response
+case class Success[A](p: A) extends Try[A] {
+    def map[B](f: A => B): Try[B] =
+        try {
+            Success(f(p))
+        } catch {
+            case e: Throwable => Failed(e)
+        }
 
-def authorize(request: Request): AuthorizedRequest = ???
-def fetchDbData(request: AuthorizedRequest): RawDbData = ???
-def hydrateDbData(data: RawDbData): DbData = ???
-def renderView(data: DbData): View = ???
-def createResponse(view: View): Response = ???
-
-def backend(request: Request): Response =
-    createResponse(
-        renderView(
-            hydrateDbData(
-                fetchDbData(
-                    authorize(request)
-                )
-            )
-        )
-    )
+    override def flatMap[B](f: A => Try[B]): Try[B] =
+        try {
+            f(p)
+        } catch {
+            case e: Throwable => Failed(e)
+        }
+}
+case class Failed[A](e: Throwable) extends Try[A]
                     </code></pre>
-                </section>
-
-                <section>
-                    <h3>Добавим обработку ошибок</h3>
-
-                    <pre><code data-trim>
-def backend(request: Request): Response =
-    createResponse(
-        renderView(
-            hydrateDbData(
-                fetchDbData(
-                    try {
-                        authorize(request)
-                    } catch {
-                        case e: AuthException => nonAuthorizedRequest
-                    }
-                )
-            )
-        )
-    )
-                    </code></pre>
-                </section>
-
-                <section>
-                    <h3>Выводы</h3>
 
                     <ul>
-                        <li>Монады задают правила выполнения функций и их композиции,
-                            через методы <code>map</code> и <code>flatMap</code>
-                        <li>for-циклы предоставляют синтаксический сахар, над <code>map</code> и <code>flatMap</code>
-                        <li>Монада <code>Option</code> предоставляет
+                        <li>Как <code>Option</code>, но будет в состоянии <code>Failed</code>
+                            в случае, если при выполнении ф-ии в <code>map</code> и <code>flatMap</code>
+                            возникает исключение
+                        <li>Преимущественно используется при работе с Java-кодом
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Монада <code>Either</code></h3>
+
+                    <pre class="stretch"><code data-trim>
+trait Either[A, B] {
+    def left = LeftProjection(this)
+    def right = RightProjection(this)
+}
+case class Left[A, B](a: A) extends Either[A, B]
+case class Right[A, B](b: B) extends Either[A, B]
+
+case class LeftProjection[A, B](e: Either[A, B]) {
+    def flatMap[X](f: A => Either[X, B]): Either[X, B] = e match {
+        case Left(a) => f(a)
+        case Right(b) => Right(b)
+    }
+    def map[X](f: A => X): Either[X, B] = e match {
+        case Left(a) => Left(f(a))
+        case Right(b) => Right(b)
+    }
+}
+case class RightProjection[A, B](e: Either[A, B]) {
+    def flatMap[X](f: B => Either[A, X]): Either[A, X] = e match {
+        case Left(a) => Left(a)
+        case Right(b) => f(b)
+    }
+    def map[X](f: B => X): Either[A, X] = e match {
+        case Left(a) => Left(a)
+        case Right(b) => Right(f(b))
+    }
+}
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Монада <code>Either</code></h3>
+
+                    <ul>
+                        <li>репрезентует значение в одном из двух возможных типов
+                        <li>как правило, используется как альтернатива <code>Option</code>,
+                            когда возможных состояний может быть два:
+                            результирующее состояние и состояние ошибки
+                        <li>например:
+                            <pre><code data-trim>
+def toInt(string: String): Either[String, Int] =
+    try {
+        Right(string.toInt)
+    } catch {
+        case e => Left("Ошибка: " + e.getMessage)
+    }
+
+toInt("1")
+> Right(1)
+toInt("booger")
+> Left("Ошибка: For input string: \"booger\"")
+                            </code></pre>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Коллекции в Scala являются монадами</h3>
+
+                    <pre class="stretch"><code data-trim>
+trait List[A] {
+    def head: A // Первый элемент списка
+    def tail: List[A] // Следующие элементы
+
+    def ++(other: List[A]): List[A] // Конкатенация двух списков
+    def map[B](f: A => B): List[B]
+    def flatMap[B](f: A => List[B]): List[B]
+}
+
+case class NonEmpty[A](head: A, tail: List[A]) extends List[A] {
+    override def ++(other: List[A]): List[A] = NonEmpty(head, tail ++ other)
+    override def map[B](f: A => B): List[B] = NonEmpty[B](f(head), tail.map(f))
+    override def flatMap[B](f: A => List[B]): List[B] = f(head) ++ tail.flatMap(f)
+}
+case class Nil[A] extends List[A] {
+    override def ++(other: List[A]): List[A] = other
+    override def map[B](f: A => B): List[B] = new Nil[B]
+    override def flatMap[B](f: A => List[B]): List[B] = new Nil[B]
+}
+                    </code></pre>
+
+                    <ul>
+                        <li>В случае c коллекциями вызов методов <code>map</code> и <code>flatMap</code> применяются
+                            поочередно к каждому из элементов коллекции, результаты же конкатенируются в новую коллекию
+                        <li>То же самое и с <code>Map</code>, т.к. ее можно рассматривать как список пар ключ -> значение
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Кратко о главном</h3>
+
+                    <small>
+                        <ul>
+                            <li class="fragment">Монады задают правила выполнения функций и их композиции,
+                                через методы <code>map</code> и <code>flatMap</code>
+                            <li class="fragment">for-циклы предоставляют синтаксический сахар, над <code>map</code> и <code>flatMap</code>
+                            <li class="fragment">Монада <code>Option</code> дает возможность задавать отсуствие данных явно на уровне системы типов,
+                                при этом избавляя от кучи логики "null-проверок"
+                            <li class="fragment">Монада <code>Either</code> дает возможность задавать возможность ошибок явно на уровне системы типов,
+                                избавляя от кучи "try/catch"-логики
+                            <li class="fragment">Монады коллекций делают недертминизм явным на уровне системы типов, избавляя от вложеных
+                                for-циклов
+                            <li class="fragment">Монада <code>Future</code> делает асинхронное выполнение явным для системы типов, скрывая
+                                логику мультипоточности
+                        </ul>
+
+                        <p class="fragment">... и др. Используйте монады везде, где это возможно, что бы код был чистым!</p>
+                    </small>
+                </section>
+
+                <section>
+                    <h3>Материалы</h3>
+                    <ul>
+                        <li><a href="https://www.youtube.com/watch?v=Mw_Jnn_Y5iA">https://www.youtube.com/watch?v=Mw_Jnn_Y5iA</a>
+                            Scala Monads: Declutter Your Code With Monadic Design
+                        <li><a href="http://www.berniepope.id.au/docs/scala_monads.pdf">http://www.berniepope.id.au/docs/scala_monads.pdf</a>
+                            Monads in Scala
                     </ul>
                 </section>
 
 				<section>
-					<h1>THE END</h1>
-					<h3>BY Hakim El Hattab / hakim.se</h3>
+					<h2>Ваши вопросы</h2>
+                    <p>&nbsp;</p>
+					<h3>Игорь Вовк</h3>
 				</section>
 
 			</div>
 
+            <div style="display: block; position: absolute; bottom: 14px; left: 50%; margin-left: -230px; z-index: 20;">
+                <small><a href="http://igorynia.github.io/scala-monads-presentation/">igorynia.github.io/scala-monads-presentation</a></small>
+            </div>
 		</div>
 
 		<script src="lib/js/head.min.js"></script>
@@ -688,8 +803,10 @@ def backend(request: Request): Response =
 				history: true,
 				center: true,
 
-				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
-				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+                slideNumber: true,
+
+				theme: "serif", // available themes are in /css/theme
+				transition: 'linear', // default/cube/page/concave/zoom/linear/fade/none
 
 				// Parallax scrolling
 				// parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
