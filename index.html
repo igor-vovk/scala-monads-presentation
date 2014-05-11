@@ -122,6 +122,53 @@ assert(intToStringConverter.convertBack("123") == 123)
                 </section>
 
                 <section>
+                    <h3>Pattern matching</h3>
+                    <img src="http://i.imgur.com/ZvRkTim.jpg">
+                </section>
+
+                <section>
+                    <h3>Pattern matching</h3>
+
+                    <pre><code data-trim class="language-scala">
+val num = 5
+// Простой пример, аналог обычного switch-case
+val result1 = num match {
+    case 1 => "Cold"
+    case 4 => "Hot"
+    case 5 => "Exactly!"
+    case _ => "Who know?" // Всё остальное, аналог default в switch-case
+}
+// Немного усложним, добавив внутрь if-ы
+val result2 = num match {
+    case 5 => "Exactly!"
+    case n if n == 4 || n == 6 => "Hot"
+    case n if n < 4 || n > 6 => "Cold"
+}
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Pattern matching</h3>
+
+                    <pre><code data-trim class="language-scala">
+sealed trait StringTuple
+case class StringTuple1(first: String) extends StringTuple
+case class StringTuple2(first: String, second: String) extends StringTuple
+case class StringTuple3(first: String, second: String, third: String) extends StringTuple
+
+val tuple: StringTuple = ???
+
+// Такой себе unboxing
+val stringRepr = tuple match {
+    case StringTuple1(first) => s"one value: $first"
+    case StringTuple2(one, two) => s"two values: $one, $two"
+    case StringTuple3(helen, ann, kate) => s"three values: $helen, $ann, $kate"
+    case _ => "Unknown tuple"
+}
+                    </code></pre>
+                </section>
+
+                <section>
                     <h3>Что такое "монада"</h3>
 
                     <ul>
@@ -314,6 +361,34 @@ case class None[A] extends Option[A] {
                 </section>
 
                 <section>
+                    <h3>Получение значения из "Option"</h3>
+                    <p>Как правило, используют pattern matching:</p>
+                            <pre><code data-trim class="language-scala">
+val op: Option[Int] = ???
+
+val result = op match {
+    case Some(number) => number
+    case None => -1
+}
+                            </code></pre>
+                        <p>Можно использовать метод <code>get</code>:</p>
+                            <pre><code data-trim class="language-scala">
+trait Option[A] { def get: A }
+case class Some[A](a: A) extends Option {
+    override def get: A = a
+}
+case class None[A] extends Option {
+    override def get: A = throw new Exception("Calling get under None")
+}
+
+Some(5).get
+> 5
+(new None).get
+> Exception("Calling get under None") was thrown
+                            </code></pre>
+                </section>
+
+                <section>
                     <h3>тот же код на Scala, используя монаду "Option"</h3>
 
                     <pre><code data-trim class="language-scala">
@@ -433,11 +508,6 @@ def compute(maybeFoo: Option[Foo]): Option[Int] =
                     </code></pre>
 
                     <small>Всего лишь синтаксический сахар</small>
-                </section>
-
-                <section>
-                    <h3>Извлечение данных из монады</h3>
-                    <p>Как правило, используется </p>
                 </section>
 
                 <section>
@@ -646,10 +716,24 @@ case class Failed[A](e: Throwable) extends Try[A]
 
                     <ul>
                         <li>Как <code>Option</code>, но будет в состоянии <code>Failed</code>
-                            в случае, если при выполнении ф-ии в <code>map</code> и <code>flatMap</code>
+                            в случае, если при выполнении ф-ии в <code>map</code> или <code>flatMap</code>
                             возникает исключение
                         <li>Преимущественно используется при работе с Java-кодом
                     </ul>
+                </section>
+
+                <section>
+                    <h3>Извелечение значения из <code>Try</code></h3>
+                    <pre><code data-trim class="language-scala">
+val computationResult: Try[Int] = ???
+
+val number = computationResult match {
+    case Success(value) => value
+    case Failure(exception) =>
+        // Do something with exception
+        -1
+}
+                    </code></pre>
                 </section>
 
                 <section>
@@ -712,7 +796,41 @@ toInt("booger")
                 </section>
 
                 <section>
-                    <h3>Коллекции в Scala являются монадами</h3>
+                    <h3>Извлечение значения из <code>Either</code></h3>
+                    <pre class="stretch"><code data-trim class="language-scala">
+trait HttpRequest
+case class HttpResponse(data: String,
+                        statusCode: Int,
+                        headers: Map[String, String] = Map.empty)
+trait User
+trait Rejection {
+    def error: String
+    def statusCode: Int
+}
+
+val request: HttpRequest = ???
+val authenticator: Request => Either[User, Rejection] = ???
+val controller: (Request, User) => HttpResponse = ???
+
+val response: HttpResponse = authenticator(request) match {
+    case Left(user) => controller(request, user)
+    case Right(rejection) => HttpResponse(rejection.error, rejection.statusCode)
+}
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Коллекции как монады</h3>
+
+                    <ul>
+                        <li>В случае c коллекциями вызов методов <code>map</code> и <code>flatMap</code> применяются
+                            поочередно к каждому из элементов коллекции, результаты же конкатенируются в новую коллекию
+                        <li>То же самое и с <code>Map</code>, т.к. ее можно рассматривать как список пар ключ -> значение
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Коллекции как монады</h3>
 
                     <pre class="stretch"><code data-trim class="language-scala">
 trait List[A] {
@@ -726,21 +844,31 @@ trait List[A] {
 
 case class NonEmpty[A](head: A, tail: List[A]) extends List[A] {
     override def ++(other: List[A]): List[A] = NonEmpty(head, tail ++ other)
+
     override def map[B](f: A => B): List[B] = NonEmpty[B](f(head), tail.map(f))
     override def flatMap[B](f: A => List[B]): List[B] = f(head) ++ tail.flatMap(f)
 }
 case class Nil[A] extends List[A] {
     override def ++(other: List[A]): List[A] = other
+
     override def map[B](f: A => B): List[B] = new Nil[B]
     override def flatMap[B](f: A => List[B]): List[B] = new Nil[B]
 }
                     </code></pre>
+                </section>
 
-                    <ul>
-                        <li>В случае c коллекциями вызов методов <code>map</code> и <code>flatMap</code> применяются
-                            поочередно к каждому из элементов коллекции, результаты же конкатенируются в новую коллекию
-                        <li>То же самое и с <code>Map</code>, т.к. ее можно рассматривать как список пар ключ -> значение
-                    </ul>
+                <section>
+                    <h3>Извлечение значений из коллекций</h3>
+
+                    <pre><code data-trim class="language-scala">
+val list = ??? // Например, List(1, 5, 3, 8)
+
+list match {
+    case Nil => // Коллекция имеет 0 элементов
+    case head :: Nil => // Коллекция имеет один элемент
+    case head :: tail => // Коллекция имеет > 1 элемента
+}
+                    </code></pre>
                 </section>
 
                 <section>
