@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>reveal.js - The HTML Presentation Framework</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+		<script>
+			if( window.location.search.match( /print-pdf/gi ) ) {
+				var link = document.createElement( 'link' );
+				link.rel = 'stylesheet';
+				link.type = 'text/css';
+				link.href = 'css/print/pdf.css';
+				document.getElementsByTagName( 'head' )[0].appendChild( link );
+			}
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>Монады в scala</h1>
+				</section>
+
+                <section>
+                    <h2>Вход в уголок маньяка</h2>
+                </section>
+
+                <section>
+                    <h3>Базовый синтаксис:</h3>
+                    <pre><code data-trim class="language-scala">
+// Классы
+class RichInt(num: Int) {
+    // Методы внутри классов
+    def plus(other: Int): RichInt = new RichInt(num + other)
+}
+// Переменные
+val a = new RichInt(5) // Переменная "a" будет иметь тип "RichInt"
+> a: RichInt
+// Вызов методов
+a.plus(5)
+> RichInt(10)
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Типы:</h3>
+
+                    <pre><code data-trim>
+// Тип может быть алиасом другого типа
+type SuperString = String
+// Алиас, обозначающий список целых чисел
+type IntList = List[Int]
+// Описание типа функции – параметр(-ы) => тип возвращаемого значения
+type IntToString = Int => String
+
+def to(int: Int): String = ???
+> to: IntToString
+                    </code></pre>
+                </section>
+
+                <section>
+                    <p>Типы могут быть описаны в теле класса, но быть заданы лишь на этапе инстанциации:</p>
+                    <pre><code data-trim>
+// При описании класса мы не задаем конкретных типов, лишь говорим,
+// что будем оперировать двумя типами А и B
+class Converter[A, B] {
+
+  def convert(a: A): B = ??? // Первый метод будет иметь тип A => B
+
+  def convertBack(b: B): A = ??? // B => A
+
+}
+
+// Конкретные типы задаются лишь на этапе инстанциации обьекта
+val intToStringConverter = new Converter[Int, String]
+
+assert(123 != "123")
+assert(intToStringConverter.convert(123) == "123")
+assert(intToStringConverter.convertBack("123") == 123)
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h2>Выход из уголка маньяка</h2>
+                </section>
+
+                <section>
+                    <h3>Что такое "монада"</h3>
+
+                    <ul>
+                        <li>всего лишь архитектурный паттерн
+                        <li>являются оберткой вокруг данных
+                        <li>"абстракция линейной цепочки связанных вычислений" &copy; википедия
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Что такое "монада"</h3>
+
+                    <pre><code data-trim>
+trait Monad[A] {
+
+    def apply(a: A): Monad[A]
+
+    def map[B](f: A => B): Monad[B]
+
+    def flatMap[B](f: A => Monad[B]): Monad[B]
+
+}
+                    </code></pre>
+
+                    <small>Прим: в scala нет базового trait'а для всех монад</small>
+
+                    <p class="fragment">
+                        Предлагает стандартизвированный интерфейс для
+                        композиции последовательных операций над внутренним(-и) значением
+                    </p>
+                    <ul>
+                        <li class="fragment"><b>apply</b> – создает монаду, как контейнер для значения
+                        <li class="fragment"><b>map</b> – применяет "обычную" ф-ю к внутреннему значению
+                        <li class="fragment"><b>flatMap</b> – применяет "монадическую" ф-ю к внутреннему значению
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Монады на практике</h2>
+                </section>
+
+                <section>
+                    <h3>Типичный java-код, стиль ранних return</h3>
+
+                    <pre class="stretch"><code data-trim>
+public class Foo {
+    public Bar getBar();
+}
+public class Bar {
+    public Baz getBaz();
+}
+public class Baz {
+    public int compute();
+}
+
+public Integer compute(Foo foo) {
+    if (foo == null)
+        return null;
+    Bar bar = foo.getBar();
+    if (bar == null)
+        return null;
+    Baz baz = bar.getBaz();
+    if (baz == null)
+        return null;
+
+    return baz.compute();
+}
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Типичный java-код, стиль вложеных if</h3>
+
+                    <pre class="stretch"><code data-trim>
+public class Foo {
+    public Bar getBar();
+}
+public class Bar {
+    public Baz getBaz();
+}
+public class Baz {
+    public int compute();
+}
+
+public Integer compute(Foo foo) {
+    if (foo != null) {
+        Bar bar = foo.getBar();
+        if (bar != null) {
+            Baz baz = bar.getBaz();
+            if (baz != null)
+                return baz.compute();
+            else
+                return null;
+        } else
+            return null;
+    } else
+        return null;
+}
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h2>Код на scala, java-way</h2>
+
+                    <pre class="stretch"><code data-trim>
+class Foo {
+    def bar: Bar
+}
+class Bar {
+    def baz: Baz
+}
+class Baz {
+    def compute: Int
+}
+
+def compute(foo: Foo): Int =
+    if (foo != null) {
+        val bar = foo.bar
+        if (bar != null) {
+            val baz = bar.baz
+            if (baz != null)
+                baz.compute
+            else
+                null
+        } else
+            null
+    } else
+        null
+                    </code></pre>
+
+                    <small class="fragment">Все еще выглядит ужасно</small>
+                </section>
+
+                <section>
+                    <h3>Монада "Option"</h3>
+
+                    <pre><code data-trim>
+sealed trait Option[A]
+
+case class Some[A](a: A) extends Option[A]
+case class None[A] extends Option[A]
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Монада "Option"</h3>
+
+                    <pre><code data-trim>
+sealed trait Option[A] {
+    def map[B](f: A => B): Option[B]
+    def flatMap[B](f: A => Option[B]): Option[B]
+}
+
+case class Some[A](a: A) extends Option[A]
+case class None[A] extends Option[A]
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Монада "Option"</h3>
+
+                    <pre><code data-trim>
+sealed trait Option[A] {
+    def map[B](f: A => B): Option[B]
+    def flatMap[B](f: A => Option[B]): Option[B]
+}
+
+case class Some[A](a: A) extends Option[A] {
+    override def map[B](f: A => B): Option[B] = new Some(f(a))
+
+    override def flatMap[B](f: A => Option[B]): Option[B] = f(a)
+}
+case class None[A] extends Option[A]
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Монада "Option"</h3>
+
+                    <pre><code data-trim>
+sealed trait Option[A] {
+    def map[B](f: A => B): Option[B]
+    def flatMap[B](f: A => Option[B]): Option[B]
+}
+
+case class Some[A](a: A) extends Option[A] {
+    override def map[B](f: A => B): Option[B] = new Some(f(a))
+
+    override def flatMap[B](f: A => Option[B]): Option[B] = f(a)
+}
+case class None[A] extends Option[A] {
+    override def map[B](f: A => B): Option[B] = new None
+
+    override def flatMap[B](f: A => Option[B]): Option[B] = new None
+}
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>тот же код на Scala, используя монаду "Option"</h3>
+
+                    <pre><code data-trim>
+class Foo { def bar: Option[Bar] }
+class Bar { def baz: Option[Baz] }
+class Baz { def compute: Int }
+
+def compute(maybeFoo: Option[Foo]): Option[Int] = ???
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>тот же код на Scala, используя монаду "Option"</h3>
+
+                    <pre><code data-trim>
+class Foo { def bar: Option[Bar] }
+class Bar { def baz: Option[Baz] }
+class Baz { def compute: Int }
+
+def computeBaz(baz: Baz): Int = baz.compute
+
+def computeBar(bar: Bar) = ???
+def computeFoo(foo: Foo) = ???
+def compute(maybeFoo: Option[Foo]): Option[Int] = ???
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>тот же код на Scala, используя монаду "Option"</h3>
+
+                    <pre><code data-trim>
+class Foo { def bar: Option[Bar] }
+class Bar { def baz: Option[Baz] }
+class Baz { def compute: Int }
+
+def computeBaz(baz: Baz): Int = baz.compute
+
+def computeBar(bar: Bar): Option[Int] = bar.baz.map(computeBaz)
+
+def computeFoo(foo: Foo) = ???
+def compute(maybeFoo: Option[Foo]): Option[Int] = ???
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>тот же код на Scala, используя монаду "Option"</h3>
+
+                    <pre><code data-trim>
+class Foo { def bar: Option[Bar] }
+class Bar { def baz: Option[Baz] }
+class Baz { def compute: Int }
+
+def computeBaz(baz: Baz): Int = baz.compute
+
+def computeBar(bar: Bar): Option[Int] = bar.baz.map(computeBaz)
+
+def computeFoo(foo: Foo) = foo.bar.flatMap(computeBar)
+
+def compute(maybeFoo: Option[Foo]): Option[Int] = ???
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>тот же код на Scala, используя монаду "Option"</h3>
+
+                    <pre><code data-trim>
+class Foo { def bar: Option[Bar] }
+class Bar { def baz: Option[Baz] }
+class Baz { def compute: Int }
+
+def computeBaz(baz: Baz): Int = baz.compute
+
+def computeBar(bar: Bar): Option[Int] = bar.baz.map(computeBaz)
+
+def computeFoo(foo: Foo) = foo.bar.flatMap(computeBar)
+
+def compute(maybeFoo: Option[Foo]): Option[Int] =
+    maybeFoo.flatMap(computeFoo)
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>тот же код на Scala, используя монаду "Option"</h3>
+
+                    <pre><code data-trim>
+class Foo { def bar: Option[Bar] }
+class Bar { def baz: Option[Baz] }
+class Baz { def compute: Int }
+
+def compute(maybeFoo: Option[Foo]): Option[Int] =
+    maybeFoo.flatMap { foo =>
+        foo.bar.flatMap { bar =>
+            bar.baz.map { baz =>
+                baz.compute
+            }
+        }
+    }
+                    </code></pre>
+
+                    <small class="fragment">Лучше, но сложно читать</small>
+                </section>
+
+                <section>
+                    <h3>тот же код на Scala, используя монаду "Option"</h3>
+
+                    <pre><code data-trim>
+class Foo { def bar: Option[Bar] }
+class Bar { def baz: Option[Baz] }
+class Baz { def compute: Int }
+
+def compute(maybeFoo: Option[Foo]): Option[Int] =
+    for {
+        foo <- maybeFoo
+        bar <- foo.bar
+        baz <- bar.baz
+    } yield baz.compute
+                    </code></pre>
+
+                    <small>Всего лишь синтаксический сахар</small>
+                </section>
+
+                <section>
+                    <h3>Интерпретатор для маленького языка</h3>
+
+                    <ul class="stretch">
+                        <li>
+                            Грамматика
+                            <pre><code data-trim>
+expr = expr '+' expr | expr '*' expr | expr '-' expr | integer | '(' expr ')'
+                            </code></pre>
+                        </li>
+                        <li class="fragment">
+                            Примеры языковых конструкций и ожидаемые значения:
+                            <ul>
+                                <li><code>3 &rarrtl; 3</code>
+                                <li><code>2 * 6 &rarrtl; 12</code>
+                                <li><code>10 - 2 * 4 &rarrtl; 2</code>
+                                <li><code>(10 - 2) * 4 &rarrtl; 32</code>
+                            </ul>
+                        </li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Типы данных для представления языковых конструкций</h3>
+
+                    <pre><code data-trim>
+abstract class Expr
+case class BinOp (op: String, left: Expr, right: Expr) extends Expr
+case class Number (number: Int) extends Expr
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Рекурсивная процедура выполнения</h3>
+
+                    <pre><code data-trim>
+def eval(e: Expr): Int = e match {
+    case Number(n) => n
+    case BinOp(o, l, r) => evalOp(o, eval(l), eval(r))
+}
+
+def evalOp(o: String, l: Int, r: Int): Int = o match {
+    case "*" => l * r
+    case "-" => l - r
+    case "+" => l + r
+}
+                    </code></pre>
+
+                    <p class="fragment">Пока что здесь нет монад</p>
+                </section>
+
+                <section>
+                    <h3>Добавим в язык деление целых чисел</h3>
+                    <ul class="stretch">
+                        <li>
+                            Расширим грамматику:
+                            <pre><code data-trim>
+expr = ... | expr '/' expr | ...
+                            </code></pre>
+                        </li>
+                        <li class="fragment">
+                            Примеры языковых конструкций и ожидаемые значения:
+                            <ul>
+                                <li><code>10 / 3 &rarrtl; 3</code>
+                                <li><code>1 / 2 &rarrtl; 0</code>
+                                <li><code>1 / 0 &rarrtl; ошибка "деление на ноль"</code>
+                            </ul>
+                        </li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Как правило, в таких случаях используют исключения</h3>
+
+                    <pre><code data-trim>
+try {
+    println(eval(e))
+} catch {
+    case ex: ArithmeticException => println(ex.getMessage)
+}
+                    </code></pre>
+
+                    <p class="fragment">Все еще нет монад</p>
+                </section>
+
+                <section>
+                    <h3>Использование монады "Option"</h3>
+
+                    <pre><code data-trim>
+def eval(e: Expr): Option[Int] = e match {
+    case Number(n) => Some(n)
+    case BinOp(o,l,r) =>
+        for {
+            x <- eval(l)
+            y <- eval(r)
+            z <- evalOp(o,x,y)
+        } yield z
+}
+def evalOp(o: String, l: Int, r: Int): Option[Int] = o match {
+    case "*" => Some(l * r)
+    case "-" => Some(l - r)
+    case "+" => Some(l + r)
+    case "/" => if (r == 0) None else Some(l / r)
+}
+                    </code></pre>
+
+                    <ul>
+                        <li class="fragment"><code>Some</code> говорит о успехе
+                        <li class="fragment"><code>None</code> говорит о неудаче
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Добавим несколько решений в язык</h3>
+
+                    <ul class="stretch">
+                        <li>
+                            Расширим грамматику:
+                            <pre><code data-trim>
+expr = ... | expr '?' expr | ...
+                            </code></pre>
+                        </li>
+                        <li class="fragment">
+                            Примеры языковых конструкций и ожидаемые значения:
+                            <ul>
+                                <li><code>12 &rarrtl; {12}</code>
+                                <li><code>10 ? 3 &rarrtl; {10, 3}</code>
+                                <li><code>2 * (10 ? 3) = {2 * 10, 2 * 3) &rarrtl; {20, 6}</code>
+                                <li><code>1 / 0 &rarrtl; {}</code>
+                                <li><code>(1 / 0) ? 1 &rarrtl; {}</code>
+                                <li><code>1 ? (0 / 1) &rarrtl; {1}</code>
+                            </ul>
+                        </li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Использование Set для возвращения нескольких решений</h3>
+
+                    <pre><code data-trim="">
+def eval(e: Expr): Set[Int] = e match {
+    case Number(n) => Set(n)
+    case BinOp(o, l, r) =>
+        for {
+            x <- eval(l)
+            y <- eval(r)
+            z <- evalOp(o, x, y)
+        } yield z
+}
+def evalOp(o: String, l: Int, r: Int): Set[Int] = o match {
+    case "*" => Set(l * r)
+    case "-" => Set(l - r)
+    case "+" => Set(l + r)
+    case "/" => if (r == 0) Set() else Set(l / r)
+    case "?" => Set(l, r)
+}
+                    </code></pre>
+
+                    <ul>
+                        <li class="fragment">Не-пустой <code>Set</code> говорит о успехе
+                        <li class="fragment">Пустой <code>Set</code> говорит о неудаче
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Что было достигнуто?</h3>
+
+                    <ul>
+                        <li>Разделение ответственности</li>
+                        <li>Значения отделены от "вычислений значений"</li>
+                        <li>Сам рекурсивный алгоритм остается неизменным...</li>
+                        <li>... и не зависит от внутренних вычислительных эффектов (отказ, не-детерминизм)</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Пример из веба</h2>
+
+                    <pre class="stretch"><code data-trim>
+type Backend = Request => Response
+def backend(req: Request): Response = ???
+
+// И более детально:
+type Backend = Request => AuthorizedRequest => RawDbData => DbModels => View => Response
+
+def authorize(request: Request): AuthorizedRequest = ???
+def fetchDbData(request: AuthorizedRequest): RawDbData = ???
+def hydrateDbData(data: RawDbData): DbData = ???
+def renderView(data: DbData): View = ???
+def createResponse(view: View): Response = ???
+
+def backend(request: Request): Response =
+    createResponse(
+        renderView(
+            hydrateDbData(
+                fetchDbData(
+                    authorize(request)
+                )
+            )
+        )
+    )
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Добавим обработку ошибок</h3>
+
+                    <pre><code data-trim>
+def backend(request: Request): Response =
+    createResponse(
+        renderView(
+            hydrateDbData(
+                fetchDbData(
+                    try {
+                        authorize(request)
+                    } catch {
+                        case e: AuthException => nonAuthorizedRequest
+                    }
+                )
+            )
+        )
+    )
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Выводы</h3>
+
+                    <ul>
+                        <li>Монады задают правила выполнения функций и их композиции,
+                            через методы <code>map</code> и <code>flatMap</code>
+                        <li>for-циклы предоставляют синтаксический сахар, над <code>map</code> и <code>flatMap</code>
+                        <li>Монада <code>Option</code> предоставляет
+                    </ul>
+                </section>
+
+				<section>
+					<h1>THE END</h1>
+					<h3>BY Hakim El Hattab / hakim.se</h3>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: false,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Parallax scrolling
+				// parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+				// parallaxBackgroundSize: '2100px 900px',
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
