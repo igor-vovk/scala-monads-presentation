@@ -84,7 +84,7 @@ a.plus(5)
                 <section>
                     <h3>Типы</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 // Тип может быть алиасом другого типа
 type SuperString = String
 // Алиас, обозначающий список целых чисел
@@ -101,7 +101,7 @@ to(5)
 
                 <section>
                     <p>Типы могут быть описаны в теле класса, но быть заданы лишь на этапе инстанциации</p>
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 // В данном случае при описании класса мы не задаем конкретных типов,
 // лишь говорим, что будем оперировать двумя типами A и B
 class Converter[A, B] {
@@ -134,7 +134,7 @@ assert(intToStringConverter.convertBack("123") == 123)
                 <section>
                     <h3>Что такое "монада"</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 trait Monad[A] {
     def apply(a: A): Monad[A]
     def map[B](f: A => B): Monad[B]
@@ -162,7 +162,7 @@ trait Monad[A] {
                 <section>
                     <h3>Типичный java-код, стиль ранних return</h3>
 
-                    <pre class="stretch"><code data-trim>
+                    <pre class="stretch"><code data-trim class="language-java">
 public class Foo {
     public Bar getBar();
 }
@@ -191,7 +191,7 @@ public Integer compute(Foo foo) {
                 <section>
                     <h3>Типичный java-код, стиль вложеных if</h3>
 
-                    <pre class="stretch"><code data-trim>
+                    <pre class="stretch"><code data-trim class="language-java">
 public class Foo {
     public Bar getBar();
 }
@@ -222,7 +222,7 @@ public Integer compute(Foo foo) {
                 <section>
                     <h3>Код на scala, java-way</h3>
 
-                    <pre class="stretch"><code data-trim>
+                    <pre class="stretch"><code data-trim class="language-scala">
 class Foo {
     def bar: Bar
 }
@@ -254,7 +254,7 @@ def compute(foo: Foo): Int =
                 <section>
                     <h3>Монада "Option" <small>(<a href="https://github.com/scala/scala/blob/2.11.x/src/library/scala/Option.scala">src</a>)</small></h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 sealed trait Option[A]
 
 case class Some[A](a: A) extends Option[A]
@@ -265,7 +265,7 @@ case class None[A] extends Option[A]
                 <section>
                     <h3>Монада "Option" <small>(<a href="https://github.com/scala/scala/blob/2.11.x/src/library/scala/Option.scala">src</a>)</small></h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 sealed trait Option[A] {
     def map[B](f: A => B): Option[B]
     def flatMap[B](f: A => Option[B]): Option[B]
@@ -279,7 +279,7 @@ case class None[A] extends Option[A]
                 <section>
                     <h3>Монада "Option" <small>(<a href="https://github.com/scala/scala/blob/2.11.x/src/library/scala/Option.scala">src</a>)</small></h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 sealed trait Option[A] {
     def map[B](f: A => B): Option[B]
     def flatMap[B](f: A => Option[B]): Option[B]
@@ -287,7 +287,6 @@ sealed trait Option[A] {
 
 case class Some[A](a: A) extends Option[A] {
     override def map[B](f: A => B): Option[B] = new Some(f(a))
-
     override def flatMap[B](f: A => Option[B]): Option[B] = f(a)
 }
 case class None[A] extends Option[A]
@@ -297,7 +296,7 @@ case class None[A] extends Option[A]
                 <section>
                     <h3>Монада "Option" <small>(<a href="https://github.com/scala/scala/blob/2.11.x/src/library/scala/Option.scala">src</a>)</small></h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 sealed trait Option[A] {
     def map[B](f: A => B): Option[B]
     def flatMap[B](f: A => Option[B]): Option[B]
@@ -305,12 +304,10 @@ sealed trait Option[A] {
 
 case class Some[A](a: A) extends Option[A] {
     override def map[B](f: A => B): Option[B] = new Some(f(a))
-
     override def flatMap[B](f: A => Option[B]): Option[B] = f(a)
 }
 case class None[A] extends Option[A] {
     override def map[B](f: A => B): Option[B] = new None
-
     override def flatMap[B](f: A => Option[B]): Option[B] = new None
 }
                     </code></pre>
@@ -319,7 +316,7 @@ case class None[A] extends Option[A] {
                 <section>
                     <h3>тот же код на Scala, используя монаду "Option"</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 class Foo { def bar: Option[Bar] }
 class Bar { def baz: Option[Baz] }
 class Baz { def compute: Int }
@@ -331,7 +328,7 @@ def compute(maybeFoo: Option[Foo]): Option[Int] = ???
                 <section>
                     <h3>тот же код на Scala, используя монаду "Option"</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 class Foo { def bar: Option[Bar] }
 class Bar { def baz: Option[Baz] }
 class Baz { def compute: Int }
@@ -347,7 +344,7 @@ def compute(maybeFoo: Option[Foo]): Option[Int] = ???
                 <section>
                     <h3>тот же код на Scala, используя монаду "Option"</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 class Foo { def bar: Option[Bar] }
 class Bar { def baz: Option[Baz] }
 class Baz { def compute: Int }
@@ -364,7 +361,7 @@ def compute(maybeFoo: Option[Foo]): Option[Int] = ???
                 <section>
                     <h3>тот же код на Scala, используя монаду "Option"</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 class Foo { def bar: Option[Bar] }
 class Bar { def baz: Option[Baz] }
 class Baz { def compute: Int }
@@ -382,7 +379,7 @@ def compute(maybeFoo: Option[Foo]): Option[Int] = ???
                 <section>
                     <h3>тот же код на Scala, используя монаду "Option"</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 class Foo { def bar: Option[Bar] }
 class Bar { def baz: Option[Baz] }
 class Baz { def compute: Int }
@@ -401,7 +398,7 @@ def compute(maybeFoo: Option[Foo]): Option[Int] =
                 <section>
                     <h3>тот же код на Scala, используя монаду "Option"</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 class Foo { def bar: Option[Bar] }
 class Bar { def baz: Option[Baz] }
 class Baz { def compute: Int }
@@ -422,7 +419,7 @@ def compute(maybeFoo: Option[Foo]): Option[Int] =
                 <section>
                     <h3>тот же код на Scala, используя монаду "Option"</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 class Foo { def bar: Option[Bar] }
 class Bar { def baz: Option[Baz] }
 class Baz { def compute: Int }
@@ -436,6 +433,11 @@ def compute(maybeFoo: Option[Foo]): Option[Int] =
                     </code></pre>
 
                     <small>Всего лишь синтаксический сахар</small>
+                </section>
+
+                <section>
+                    <h3>Извлечение данных из монады</h3>
+                    <p>Как правило, используется </p>
                 </section>
 
                 <section>
@@ -463,7 +465,7 @@ expr = expr '+' expr | expr '*' expr | expr '-' expr | integer | '(' expr ')'
                 <section>
                     <h3>Типы данных для представления языковых конструкций</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 abstract class Expr
 case class BinOp (op: String, left: Expr, right: Expr) extends Expr
 case class Number (number: Int) extends Expr
@@ -473,7 +475,7 @@ case class Number (number: Int) extends Expr
                 <section>
                     <h3>Рекурсивная процедура выполнения</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 def eval(e: Expr): Int = e match {
     case Number(n) => n
     case BinOp(o, l, r) => evalOp(o, eval(l), eval(r))
@@ -512,7 +514,7 @@ expr = ... | expr '/' expr | ...
                 <section>
                     <h3>Как правило, в таких случаях используют исключения</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 try {
     println(eval(e))
 } catch {
@@ -526,7 +528,7 @@ try {
                 <section>
                     <h3>Использование монады "Option"</h3>
 
-                    <pre><code data-trim>
+                    <pre><code data-trim class="language-scala">
 def eval(e: Expr): Option[Int] = e match {
     case Number(n) => Some(n)
     case BinOp(o,l,r) =>
@@ -577,7 +579,7 @@ expr = ... | expr '?' expr | ...
                 <section>
                     <h3>Использование Set для возвращения нескольких решений</h3>
 
-                    <pre><code data-trim="">
+                    <pre><code data-trim class="language-scala">
 def eval(e: Expr): Set[Int] = e match {
     case Number(n) => Set(n)
     case BinOp(o, l, r) =>
@@ -622,7 +624,7 @@ def evalOp(o: String, l: Int, r: Int): Set[Int] = o match {
                 <section>
                     <h3>Монада <code>Try</code> <small>(<a href="https://github.com/scala/scala/blob/2.11.x/src/library/scala/util/Try.scala">src</a>)</small></h3>
 
-                    <pre class="stretch"><code data-trim>
+                    <pre class="stretch"><code data-trim class="language-scala">
 trait Try[A] {
     def map[B](f: A => B): Try[B]
     def flatMap[B](f: A => Try[B]): Try[B]
@@ -630,16 +632,12 @@ trait Try[A] {
 
 case class Success[A](p: A) extends Try[A] {
     def map[B](f: A => B): Try[B] =
-        try {
-            Success(f(p))
-        } catch {
+        try { Success(f(p)) } catch {
             case e: Throwable => Failed(e)
         }
 
     override def flatMap[B](f: A => Try[B]): Try[B] =
-        try {
-            f(p)
-        } catch {
+        try { f(p) } catch {
             case e: Throwable => Failed(e)
         }
 }
@@ -657,7 +655,7 @@ case class Failed[A](e: Throwable) extends Try[A]
                 <section>
                     <h3>Монада <code>Either</code></h3>
 
-                    <pre class="stretch"><code data-trim>
+                    <pre class="stretch"><code data-trim class="language-scala">
 trait Either[A, B] {
     def left = LeftProjection(this)
     def right = RightProjection(this)
@@ -697,7 +695,7 @@ case class RightProjection[A, B](e: Either[A, B]) {
                             когда возможных состояний может быть два:
                             результирующее состояние и состояние ошибки
                         <li>например:
-                            <pre><code data-trim>
+                            <pre><code data-trim class="language-scala">
 def toInt(string: String): Either[String, Int] =
     try {
         Right(string.toInt)
@@ -716,7 +714,7 @@ toInt("booger")
                 <section>
                     <h3>Коллекции в Scala являются монадами</h3>
 
-                    <pre class="stretch"><code data-trim>
+                    <pre class="stretch"><code data-trim class="language-scala">
 trait List[A] {
     def head: A // Первый элемент списка
     def tail: List[A] // Следующие элементы
